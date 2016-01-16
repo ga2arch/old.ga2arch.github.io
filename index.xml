@@ -112,10 +112,14 @@ Una monade è definita come&lt;/p&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
 
-&lt;p&gt;Dove:
-- &lt;em&gt;return&lt;/em&gt;: ci permette di prendere una valore puro di tipo a ed inserirlo
-  all&amp;rsquo;interno di un &amp;ldquo;contesto&amp;rdquo; di tipo m
-- &lt;em&gt;&amp;gt;&amp;gt;=&lt;/em&gt;: ci permette di swrappare a da m, passarlo ad una funzione che elabora i  il dato e ritorna un tipo b wrappato nel medeismo contesto, e ritornare m b&lt;/p&gt;
+&lt;p&gt;Dove:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;return&lt;/strong&gt;: ci permette di prendere una valore puro di tipo a ed inserirlo
+all&amp;rsquo;interno di un &amp;ldquo;contesto&amp;rdquo; di tipo m&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&amp;gt;&amp;gt;=&lt;/strong&gt;: ci permette di swrappare a da m, passarlo ad una funzione che elabora i  il dato e ritorna un tipo b wrappato nel medeismo contesto, e ritornare m b&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;p&gt;Si può vedere che la monade è esattamente ciò che ci serve per comporre &lt;em&gt;f&lt;/em&gt; e &lt;em&gt;g&lt;/em&gt; in modo pulito.&lt;/p&gt;
 

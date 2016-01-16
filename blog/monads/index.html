@@ -208,10 +208,14 @@ Una monade è definita come</p>
 </code></pre></div>
 </p>
 
-<p>Dove:
-- <em>return</em>: ci permette di prendere una valore puro di tipo a ed inserirlo
-  all&rsquo;interno di un &ldquo;contesto&rdquo; di tipo m
-- <em>&gt;&gt;=</em>: ci permette di swrappare a da m, passarlo ad una funzione che elabora i  il dato e ritorna un tipo b wrappato nel medeismo contesto, e ritornare m b</p>
+<p>Dove:</p>
+
+<ul>
+<li><p><strong>return</strong>: ci permette di prendere una valore puro di tipo a ed inserirlo
+all&rsquo;interno di un &ldquo;contesto&rdquo; di tipo m</p></li>
+
+<li><p><strong>&gt;&gt;=</strong>: ci permette di swrappare a da m, passarlo ad una funzione che elabora i  il dato e ritorna un tipo b wrappato nel medeismo contesto, e ritornare m b</p></li>
+</ul>
 
 <p>Si può vedere che la monade è esattamente ciò che ci serve per comporre <em>f</em> e <em>g</em> in modo pulito.</p>
 
