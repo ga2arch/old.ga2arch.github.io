@@ -167,14 +167,31 @@ Un monad è definita come&lt;/p&gt;
       &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;found&amp;quot;&lt;/span&gt;
     &lt;span class=&#34;kr&#34;&gt;else&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;nada&amp;quot;&lt;/span&gt;
     
-&lt;span class=&#34;c1&#34;&gt;-- Questa riscrittura di g ci permette di comporlo ad f invece di usare&lt;/span&gt;
-&lt;span class=&#34;c1&#34;&gt;-- una funzione intermediaria come avevamo fatto prima&lt;/span&gt;
 &lt;span class=&#34;nf&#34;&gt;g&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kr&#34;&gt;do&lt;/span&gt;
   &lt;span class=&#34;n&#34;&gt;counter&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;get&lt;/span&gt;
   &lt;span class=&#34;n&#34;&gt;put&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;counter&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
   &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;()&lt;/span&gt;
   
-&lt;span class=&#34;nf&#34;&gt;runState&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;zap&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;g&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;kt&#34;&gt;CounterState&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;nf&#34;&gt;statef&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kr&#34;&gt;do&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;zap&amp;quot;&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;g&lt;/span&gt;
+  
+&lt;span class=&#34;nf&#34;&gt;runState&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;statef&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;kt&#34;&gt;CounterState&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Desugaring la do notation otteniamo:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;code class=&#34;language-haskell&#34; data-lang=&#34;haskell&#34;&gt;&lt;span class=&#34;nf&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;name&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;get&lt;/span&gt; 
+  &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;counter&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;kr&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;name&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;==&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;zap&amp;quot;&lt;/span&gt;
+    &lt;span class=&#34;kr&#34;&gt;then&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;put&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;kr&#34;&gt;_&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;found&amp;quot;&lt;/span&gt;
+    &lt;span class=&#34;kr&#34;&gt;else&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;nada&amp;quot;&lt;/span&gt;
+    
+&lt;span class=&#34;nf&#34;&gt;g&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;get&lt;/span&gt; 
+  &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;counter&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;put&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;counter&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;))&lt;/span&gt; 
+  &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;()&lt;/span&gt;
+
+&lt;span class=&#34;nf&#34;&gt;runState&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;zap&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;kr&#34;&gt;_&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;g&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;kt&#34;&gt;CounterState&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
 </description>

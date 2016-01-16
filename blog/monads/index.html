@@ -263,14 +263,31 @@ Un monad è definita come</p>
       <span class="n">return</span> <span class="s">&quot;found&quot;</span>
     <span class="kr">else</span> <span class="n">return</span> <span class="s">&quot;nada&quot;</span>
     
-<span class="c1">-- Questa riscrittura di g ci permette di comporlo ad f invece di usare</span>
-<span class="c1">-- una funzione intermediaria come avevamo fatto prima</span>
 <span class="nf">g</span> <span class="ow">=</span> <span class="kr">do</span>
   <span class="n">counter</span> <span class="ow">&lt;-</span> <span class="n">get</span>
   <span class="n">put</span> <span class="p">(</span><span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
   <span class="n">return</span> <span class="nb">()</span>
   
-<span class="nf">runState</span> <span class="p">(</span><span class="n">f</span> <span class="s">&quot;zap&quot;</span> <span class="o">&gt;&gt;=</span> <span class="n">g</span><span class="p">)</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
+<span class="nf">statef</span> <span class="ow">=</span> <span class="kr">do</span>
+  <span class="n">f</span> <span class="s">&quot;zap&quot;</span>
+  <span class="n">g</span>
+  
+<span class="nf">runState</span> <span class="n">statef</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+</p>
+
+<p>Desugaring la do notation otteniamo:</p>
+
+<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">f</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> 
+  <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="n">counter</span> <span class="ow">-&gt;</span> <span class="kr">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;zap&quot;</span>
+    <span class="kr">then</span> <span class="n">put</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">return</span> <span class="s">&quot;found&quot;</span>
+    <span class="kr">else</span> <span class="n">return</span> <span class="s">&quot;nada&quot;</span>
+    
+<span class="nf">g</span> <span class="ow">=</span> <span class="n">get</span> 
+  <span class="o">&gt;&gt;=</span> <span class="p">(</span><span class="nf">\</span><span class="n">counter</span> <span class="ow">-&gt;</span> <span class="n">put</span> <span class="p">(</span><span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> 
+  <span class="o">&gt;&gt;=</span> <span class="n">return</span> <span class="nb">()</span>
+
+<span class="nf">runState</span> <span class="p">(</span><span class="n">f</span> <span class="s">&quot;zap&quot;</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">g</span><span class="p">)</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div>
 </p>
 
