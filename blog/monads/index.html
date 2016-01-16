@@ -180,12 +180,32 @@ Come procedere allora, prima cosa che si può fare è definire un record che def
 <span class="nf">g</span> <span class="ow">::</span> <span class="kt">State</span> <span class="kt">String</span> <span class="ow">-&gt;</span> <span class="kt">State</span> <span class="kt">CounterState</span> <span class="nb">()</span>
 <span class="nf">g</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">st</span><span class="o">@</span><span class="p">(</span><span class="kt">CounterState</span> <span class="n">counter</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="nb">()</span><span class="p">,</span> <span class="n">st</span><span class="p">{</span><span class="n">counter</span><span class="ow">=</span><span class="n">counter</span><span class="o">+</span><span class="mi">1</span><span class="p">}))</span>
 
-<span class="kr">let</span> <span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">st1</span><span class="p">)</span> <span class="ow">=</span> <span class="n">unState</span> <span class="p">(</span><span class="n">f</span> <span class="s">&quot;zap&quot;</span><span class="p">)</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
-<span class="kr">let</span> <span class="p">(</span><span class="n">result2</span><span class="p">,</span> <span class="n">st2</span><span class="p">)</span> <span class="ow">=</span> <span class="n">unState</span> <span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="n">st1</span>
+<span class="kr">let</span> <span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">st1</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">unState</span> <span class="p">(</span><span class="n">f</span> <span class="s">&quot;zap&quot;</span><span class="p">))</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
+<span class="kr">let</span> <span class="p">(</span><span class="n">result2</span><span class="p">,</span> <span class="n">st2</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">unState</span> <span class="n">g</span><span class="p">)</span> <span class="n">st1</span>
 </code></pre></div>
 </p>
 
 <p>Abbiamo &ldquo;wrappato&rdquo; le due funzioni e messe all&rsquo;interno del record State e chiamare <em>unState</em> sul record <em>State</em> ci permette di estrarre la funzione e di chiamarla poi passandoci lo stato o argomenti aggiuntivi.</p>
+
+<p>Guardandi attentamente il tipo di ritorno di entrambe le funzioni notiamo che <em>State CounterState</em> è costante, cambia solo il tipo di ritorno, quindi se assegniamo</p>
+
+<pre><code>m = State CounterState
+</code></pre>
+
+<p>possiamo riscrivere le signature</p>
+
+<pre><code>f :: String -&gt; m String
+g :: m ()
+</code></pre>
+
+<p>Ora vogliamo affrontare il problema di comporre queste due funzioni e qui entrano in campo le Monadi.
+Un monad è definita come</p>
+
+<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Monad</span> <span class="kr">where</span>
+  <span class="n">return</span> <span class="ow">::</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">a</span>
+  <span class="p">(</span><span class="o">&gt;&gt;=</span><span class="p">)</span> <span class="ow">::</span> <span class="n">m</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">b</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">b</span>
+</code></pre></div>
+</p>
 
                 <br>
                 <p><a href="https://ga2arch.github.io/blog/">Back to posts</a></p>
