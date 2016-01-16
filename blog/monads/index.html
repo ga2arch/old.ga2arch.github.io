@@ -107,7 +107,7 @@
                 </div>
                 <div class="meta">
                     <div class="date" title="Sat Jan 16 2016 13:40:51 CET">Jan 16, 2016</div>
-                    <div class="reading-time"><div class="middot"></div>4 minutes read</div>
+                    <div class="reading-time"><div class="middot"></div>5 minutes read</div>
                 </div>
             </div>
             <div class="markdown">
@@ -142,7 +142,7 @@ alterare il valore delle variabili una volta settate, poniamoci il problema di c
 <p>Come si nota la cosa non è molto comodo oltre al fatto che non è ben definita a livello di tipi.
 Come procedere allora, prima cosa che si può fare è definire un record che definisca lo state da passare.</p>
 
-<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">CounterState</span> <span class="ow">=</span> <span class="kt">CounterState</span> 
+<div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">CounterState</span> <span class="ow">=</span> <span class="kt">CounterState</span> 
  <span class="p">{</span> <span class="n">counter</span> <span class="ow">::</span> <span class="kt">Int</span>
  <span class="p">}</span>
  
@@ -157,7 +157,7 @@ Come procedere allora, prima cosa che si può fare è definire un record che def
 <span class="kr">let</span> <span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">st1</span><span class="p">)</span> <span class="ow">=</span> <span class="n">f</span> <span class="s">&quot;zap&quot;</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
 <span class="kr">let</span> <span class="p">(</span><span class="n">result2</span><span class="p">,</span> <span class="n">st2</span><span class="p">)</span> <span class="ow">=</span> <span class="n">g</span> <span class="n">st1</span>
 </code></pre></div>
-</p>
+
 
 <p>Già va meglio, si può vedere che ora g accetta solo CounterState, ma c&rsquo;è sempre bisogno di ricordarsi di ritornare lo state e nonstante entrambe le funzioni lavorino sul medesimo stato non sono componibili direttamente, c&rsquo;è sempre bisogno di spacchettare result e state e passare lo state alla nuova funzione.</p>
 
@@ -223,7 +223,54 @@ Un monad è definita come</p>
   <span class="c1">-- tupla che va decomposta come abbiamo fatto prima e passare il nuovo </span>
   <span class="c1">-- stato alla funzione successiva.</span>
   <span class="n">f</span> <span class="o">&gt;&gt;=</span> <span class="n">g</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="kr">let</span> <span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">st1</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">unState</span> <span class="n">f</span><span class="p">)</span> <span class="n">s</span> 
-                         <span class="kr">in</span> <span class="p">(</span><span class="n">unState</span> <span class="n">g</span><span class="p">)</span> <span class="n">st1</span><span class="p">)</span>
+                         <span class="kr">in</span> <span class="n">unState</span> <span class="p">(</span><span class="n">g</span> <span class="n">result1</span><span class="p">)</span> <span class="n">st1</span>
+</code></pre></div>
+</p>
+
+<p>Ora vogliamo comporre i nostri <em>f</em> e <em>g</em> di partenza</p>
+
+<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="c1">-- Potremmo provare </span>
+<span class="nf">f</span> <span class="s">&quot;zap&quot;</span> <span class="o">&gt;&gt;=</span> <span class="n">g</span>
+
+<span class="c1">-- Ma cioè non funzionerebbe perché g vuole agire sullo stato direttamente</span>
+<span class="c1">-- ma per implementazione in &gt;&gt;= a g viene passato il result di f quindi </span>
+<span class="c1">-- dobbiamo </span>
+<span class="nf">f</span> <span class="s">&quot;zap&quot;</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">g</span>
+
+<span class="c1">-- Possiamo creare due comode funzioni per manipolare lo stato+</span>
+
+<span class="c1">-- get prende lo stato e lo inserisce come valore di ritorno</span>
+<span class="nf">get</span> <span class="ow">::</span> <span class="kt">State</span> <span class="n">s</span> <span class="n">s</span>
+<span class="nf">get</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+
+<span class="c1">-- put ignora lo stato precendente e inserisce quello passato</span>
+<span class="nf">put</span> <span class="ow">::</span> <span class="n">s</span> <span class="ow">-&gt;</span> <span class="kt">State</span> <span class="n">s</span> <span class="nb">()</span>
+<span class="nf">put</span> <span class="n">s</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="nb">()</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+
+<span class="c1">-- Ora manca una funzione per eseguire il tutto, poi la composizione ritorna </span>
+<span class="c1">-- uno State s a è necessario swrappare il tutto e passare uno stato iniziale</span>
+<span class="nf">runState</span> <span class="n">f</span> <span class="n">state</span> <span class="ow">=</span> <span class="p">(</span><span class="n">unState</span> <span class="n">f</span><span class="p">)</span> <span class="n">state</span>
+</code></pre></div>
+</p>
+
+<p>Ora possiamo riscrivere le funzioni iniziali usando <em>get</em> e <em>put</em></p>
+
+<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">f</span> <span class="n">name</span> <span class="ow">=</span> <span class="kr">do</span> 
+  <span class="n">counter</span> <span class="ow">&lt;-</span> <span class="n">get</span>
+  <span class="kr">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;zap&quot;</span>
+    <span class="kr">then</span> <span class="kr">do</span>
+      <span class="n">put</span> <span class="p">(</span><span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="n">return</span> <span class="s">&quot;found&quot;</span>
+    <span class="kr">else</span> <span class="n">return</span> <span class="s">&quot;nada&quot;</span>
+    
+<span class="c1">-- Questa riscrittura di g ci permette di comporlo ad f invece di usare</span>
+<span class="c1">-- una funzione intermediaria come avevamo fatto prima</span>
+<span class="nf">g</span> <span class="ow">=</span> <span class="kr">do</span>
+  <span class="n">counter</span> <span class="ow">&lt;-</span> <span class="n">get</span>
+  <span class="n">put</span> <span class="p">(</span><span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="n">return</span> <span class="nb">()</span>
+  
+<span class="nf">runState</span> <span class="p">(</span><span class="n">f</span> <span class="s">&quot;zap&quot;</span> <span class="o">&gt;&gt;=</span> <span class="n">g</span><span class="p">)</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div>
 </p>
 
