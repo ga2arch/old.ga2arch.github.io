@@ -6,18 +6,18 @@
     <description>Recent content in Blog on Gabriele Carrettoni</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Sat, 16 Jan 2016 13:40:51 +0100</lastBuildDate>
+    <lastBuildDate>Sat, 16 Jan 2016 17:32:04 +0100</lastBuildDate>
     <atom:link href="https://ga2arch.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>Monads</title>
-      <link>https://ga2arch.github.io/blog/monads/</link>
-      <pubDate>Sat, 16 Jan 2016 13:40:51 +0100</pubDate>
+      <title>State Monad da 0</title>
+      <link>https://ga2arch.github.io/blog/state-monad-da-0/</link>
+      <pubDate>Sat, 16 Jan 2016 17:32:04 +0100</pubDate>
       
-      <guid>https://ga2arch.github.io/blog/monads/</guid>
+      <guid>https://ga2arch.github.io/blog/state-monad-da-0/</guid>
       <description>
 
-&lt;h2 id=&#34;monads:872cae6effde6b0736f0418affaaf91b&#34;&gt;Monads&lt;/h2&gt;
+&lt;h2 id=&#34;state-monad-da-0:872cae6effde6b0736f0418affaaf91b&#34;&gt;State Monad da 0&lt;/h2&gt;
 
 &lt;p&gt;Per spiegare cosa siano le monadi proverò a sviluppare l&amp;rsquo;intuizione necessaria
 per arrivare ad implementare la monade State.&lt;/p&gt;
