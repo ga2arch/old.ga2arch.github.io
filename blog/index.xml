@@ -22,8 +22,9 @@
 &lt;p&gt;Per spiegare cosa siano le monadi proverò a sviluppare l&amp;rsquo;intuizione necessaria
 per arrivare ad implementare la monade State.&lt;/p&gt;
 
-&lt;p&gt;Supponiamo di essere in un linguaggio puro, ovvero sia dove non è possibile
-alterare il valore delle variabili una volta settate, poniamoci il problema di come trasportare lo stato da una funzione all&amp;rsquo;altra:&lt;/p&gt;
+&lt;p&gt;In Haskell, essendo il linguaggio pure, non è possibile alterare il valore delle variabili una volta settate, quindi come facciamo ad &amp;ldquo;emulare&amp;rdquo; lo state ?&lt;/p&gt;
+
+&lt;p&gt;Partiamo definendo due semplici funzioni:&lt;/p&gt;
 
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;code class=&#34;language-haskell&#34; data-lang=&#34;haskell&#34;&gt;&lt;span class=&#34;nf&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;::&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;String&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;Int&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;kt&#34;&gt;String&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;Int&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
 &lt;span class=&#34;nf&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;name&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;counter&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kr&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;name&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;==&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;zap&amp;quot;&lt;/span&gt; 
@@ -41,9 +42,9 @@ alterare il valore delle variabili una volta settate, poniamoci il problema di c
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
 
-&lt;p&gt;ogni funzione che vuol manipoalre lo stato dovrà prendere tutte le variabili che lo compongono e ricordarsi di ritornare all&amp;rsquo;uscita della funzione stessa assieme a quello che la funzione ritornerebbe normalmente.&lt;/p&gt;
+&lt;p&gt;ogni funzione che vuol manipolare lo stato dovrà prendere tutte le variabili che lo compongono e ricordarsi di ritornarle all&amp;rsquo;uscita della funzione stessa assieme a quello che la funzione ritornerebbe normalmente.&lt;/p&gt;
 
-&lt;p&gt;Come si nota la cosa non è molto comodo oltre al fatto che non è ben definita a livello di tipi.
+&lt;p&gt;Come si nota la cosa non è molto comoda oltre al fatto che non è ben definita a livello di tipi.
 Come procedere allora, prima cosa che si può fare è definire un record che definisca lo state da passare.&lt;/p&gt;
 
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;code class=&#34;language-haskell&#34; data-lang=&#34;haskell&#34;&gt;&lt;span class=&#34;kr&#34;&gt;data&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;CounterState&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;CounterState&lt;/span&gt; 
@@ -89,7 +90,7 @@ Come procedere allora, prima cosa che si può fare è definire un record che def
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
 
-&lt;p&gt;Abbiamo &amp;ldquo;wrappato&amp;rdquo; le due funzioni e messe all&amp;rsquo;interno del record State e chiamare &lt;em&gt;unState&lt;/em&gt; sul record &lt;em&gt;State&lt;/em&gt; ci permette di estrarre la funzione e di chiamarla poi passandoci lo stato o argomenti aggiuntivi.&lt;/p&gt;
+&lt;p&gt;Abbiamo &amp;ldquo;wrappato&amp;rdquo; le due funzioni e messe all&amp;rsquo;interno del record State e chiamare &lt;em&gt;unState&lt;/em&gt; sul record &lt;em&gt;State&lt;/em&gt; ci permette di estrarre la funzione e di invocarla passandovi lo stato e/o argomenti aggiuntivi.&lt;/p&gt;
 
 &lt;p&gt;Guardandi attentamente il tipo di ritorno di entrambe le funzioni notiamo che &lt;em&gt;State CounterState&lt;/em&gt; è costante, cambia solo il tipo di ritorno, quindi se assegniamo&lt;/p&gt;
 
@@ -103,13 +104,18 @@ g :: m ()
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Ora vogliamo affrontare il problema di comporre queste due funzioni e qui entrano in campo le Monadi.
-Un monad è definita come&lt;/p&gt;
+Una monade è definita come&lt;/p&gt;
 
 &lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;code class=&#34;language-haskell&#34; data-lang=&#34;haskell&#34;&gt;&lt;span class=&#34;kr&#34;&gt;class&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;Monad&lt;/span&gt; &lt;span class=&#34;kr&#34;&gt;where&lt;/span&gt;
   &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;::&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;a&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;m&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;a&lt;/span&gt;
   &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;::&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;m&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;a&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;a&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;m&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;b&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;m&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;b&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
+
+&lt;p&gt;Dove:
+- &lt;em&gt;return&lt;/em&gt;: ci permette di prendere una valore puro di tipo a ed inserirlo
+  all&amp;rsquo;interno di un &amp;ldquo;contesto&amp;rdquo; di tipo m
+- &lt;em&gt;&amp;gt;&amp;gt;=&lt;/em&gt;: ci permette di swrappare a da m, passarlo ad una funzione che elabora i  il dato e ritorna un tipo b wrappato nel medeismo contesto, e ritornare m b&lt;/p&gt;
 
 &lt;p&gt;Si può vedere che la monade è esattamente ciò che ci serve per comporre &lt;em&gt;f&lt;/em&gt; e &lt;em&gt;g&lt;/em&gt; in modo pulito.&lt;/p&gt;
 
@@ -122,12 +128,11 @@ Un monad è definita come&lt;/p&gt;
   &lt;span class=&#34;n&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;x&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;State&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;x&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;))&lt;/span&gt;
   
   &lt;span class=&#34;c1&#34;&gt;-- Abbiamo due funzioni (s -&amp;gt; (a, s)) che sono però &amp;quot;wrappate&amp;quot; dentro il &lt;/span&gt;
-  &lt;span class=&#34;c1&#34;&gt;-- record State s a{ unState :: s -&amp;gt; (a, s) }, quindi per comporle per prima &lt;/span&gt;
-  &lt;span class=&#34;c1&#34;&gt;-- cosa dobbiamo swrappalre, poi passargli lo stato, quindi otteniamo una&lt;/span&gt;
-  &lt;span class=&#34;c1&#34;&gt;-- tupla che va decomposta come abbiamo fatto prima e passare il nuovo &lt;/span&gt;
-  &lt;span class=&#34;c1&#34;&gt;-- stato alla funzione successiva.&lt;/span&gt;
-  &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;g&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;State&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;kr&#34;&gt;let&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;result1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;st1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;unState&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; 
-                         &lt;span class=&#34;kr&#34;&gt;in&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;unState&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;g&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;result1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;st1&lt;/span&gt;
+  &lt;span class=&#34;c1&#34;&gt;-- record State s a { unState :: s -&amp;gt; (a, s) }, per prima cosa dobbiamo &lt;/span&gt;
+  &lt;span class=&#34;c1&#34;&gt;-- swrappare la prima funzione f, passarle lo stato s, poi passare il result &lt;/span&gt;
+  &lt;span class=&#34;c1&#34;&gt;-- di f a g, swrappare il risultato e passarvi lo stato ritornato da f&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;g&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;State&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;kr&#34;&gt;let&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;result&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;st&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;unState&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; 
+                         &lt;span class=&#34;kr&#34;&gt;in&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;unState&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;g&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;result&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;st&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
 
@@ -139,7 +144,7 @@ Un monad è definita come&lt;/p&gt;
 &lt;span class=&#34;c1&#34;&gt;-- Ma cioè non funzionerebbe perché g vuole agire sullo stato direttamente&lt;/span&gt;
 &lt;span class=&#34;c1&#34;&gt;-- ma per implementazione in &amp;gt;&amp;gt;= a g viene passato il result di f quindi &lt;/span&gt;
 &lt;span class=&#34;c1&#34;&gt;-- dobbiamo &lt;/span&gt;
-&lt;span class=&#34;nf&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;zap&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;kr&#34;&gt;_&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;g&lt;/span&gt;
+&lt;span class=&#34;nf&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;quot;zap&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;kr&#34;&gt;_&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;g&lt;/span&gt; &lt;span class=&#34;c1&#34;&gt;-- ovvero ignorare il result di f e invocare g, questo perchè la nostra g non accetta parametri ma è interessata solo allo stato.&lt;/span&gt;
 
 &lt;span class=&#34;c1&#34;&gt;-- Possiamo creare due comode funzioni per manipolare lo stato+&lt;/span&gt;
 
@@ -147,11 +152,11 @@ Un monad è definita come&lt;/p&gt;
 &lt;span class=&#34;nf&#34;&gt;get&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;::&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;State&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt;
 &lt;span class=&#34;nf&#34;&gt;get&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;State&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;s&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;))&lt;/span&gt;
 
-&lt;span class=&#34;c1&#34;&gt;-- put ignora lo stato precendente e inserisce quello passato&lt;/span&gt;
+&lt;span class=&#34;c1&#34;&gt;-- put ignora lo stato precendente e inserisce quello passato come parametro&lt;/span&gt;
 &lt;span class=&#34;nf&#34;&gt;put&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;::&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;State&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;()&lt;/span&gt;
 &lt;span class=&#34;nf&#34;&gt;put&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;State&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;\&lt;/span&gt;&lt;span class=&#34;kr&#34;&gt;_&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;()&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;s&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
 
-&lt;span class=&#34;c1&#34;&gt;-- Ora manca una funzione per eseguire il tutto, poi la composizione ritorna &lt;/span&gt;
+&lt;span class=&#34;c1&#34;&gt;-- Ora manca una funzione per eseguire il tutto, poiché la composizione ritorna &lt;/span&gt;
 &lt;span class=&#34;c1&#34;&gt;-- uno State s a è necessario swrappare il tutto e passare uno stato iniziale&lt;/span&gt;
 &lt;span class=&#34;nf&#34;&gt;runState&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;state&lt;/span&gt; &lt;span class=&#34;ow&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;unState&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;state&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;

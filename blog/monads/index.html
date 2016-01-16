@@ -118,8 +118,9 @@
 <p>Per spiegare cosa siano le monadi proverò a sviluppare l&rsquo;intuizione necessaria
 per arrivare ad implementare la monade State.</p>
 
-<p>Supponiamo di essere in un linguaggio puro, ovvero sia dove non è possibile
-alterare il valore delle variabili una volta settate, poniamoci il problema di come trasportare lo stato da una funzione all&rsquo;altra:</p>
+<p>In Haskell, essendo il linguaggio pure, non è possibile alterare il valore delle variabili una volta settate, quindi come facciamo ad &ldquo;emulare&rdquo; lo state ?</p>
+
+<p>Partiamo definendo due semplici funzioni:</p>
 
 <div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">f</span> <span class="ow">::</span> <span class="kt">String</span> <span class="ow">-&gt;</span> <span class="kt">Int</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="kt">String</span><span class="p">,</span> <span class="kt">Int</span><span class="p">)</span>
 <span class="nf">f</span> <span class="n">name</span> <span class="n">counter</span> <span class="ow">=</span> <span class="kr">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;zap&quot;</span> 
@@ -137,9 +138,9 @@ alterare il valore delle variabili una volta settate, poniamoci il problema di c
 </code></pre></div>
 </p>
 
-<p>ogni funzione che vuol manipoalre lo stato dovrà prendere tutte le variabili che lo compongono e ricordarsi di ritornare all&rsquo;uscita della funzione stessa assieme a quello che la funzione ritornerebbe normalmente.</p>
+<p>ogni funzione che vuol manipolare lo stato dovrà prendere tutte le variabili che lo compongono e ricordarsi di ritornarle all&rsquo;uscita della funzione stessa assieme a quello che la funzione ritornerebbe normalmente.</p>
 
-<p>Come si nota la cosa non è molto comodo oltre al fatto che non è ben definita a livello di tipi.
+<p>Come si nota la cosa non è molto comoda oltre al fatto che non è ben definita a livello di tipi.
 Come procedere allora, prima cosa che si può fare è definire un record che definisca lo state da passare.</p>
 
 <div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">CounterState</span> <span class="ow">=</span> <span class="kt">CounterState</span> 
@@ -185,7 +186,7 @@ Come procedere allora, prima cosa che si può fare è definire un record che def
 </code></pre></div>
 </p>
 
-<p>Abbiamo &ldquo;wrappato&rdquo; le due funzioni e messe all&rsquo;interno del record State e chiamare <em>unState</em> sul record <em>State</em> ci permette di estrarre la funzione e di chiamarla poi passandoci lo stato o argomenti aggiuntivi.</p>
+<p>Abbiamo &ldquo;wrappato&rdquo; le due funzioni e messe all&rsquo;interno del record State e chiamare <em>unState</em> sul record <em>State</em> ci permette di estrarre la funzione e di invocarla passandovi lo stato e/o argomenti aggiuntivi.</p>
 
 <p>Guardandi attentamente il tipo di ritorno di entrambe le funzioni notiamo che <em>State CounterState</em> è costante, cambia solo il tipo di ritorno, quindi se assegniamo</p>
 
@@ -199,13 +200,18 @@ g :: m ()
 </code></pre>
 
 <p>Ora vogliamo affrontare il problema di comporre queste due funzioni e qui entrano in campo le Monadi.
-Un monad è definita come</p>
+Una monade è definita come</p>
 
 <p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Monad</span> <span class="kr">where</span>
   <span class="n">return</span> <span class="ow">::</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">a</span>
   <span class="p">(</span><span class="o">&gt;&gt;=</span><span class="p">)</span> <span class="ow">::</span> <span class="n">m</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">b</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">b</span>
 </code></pre></div>
 </p>
+
+<p>Dove:
+- <em>return</em>: ci permette di prendere una valore puro di tipo a ed inserirlo
+  all&rsquo;interno di un &ldquo;contesto&rdquo; di tipo m
+- <em>&gt;&gt;=</em>: ci permette di swrappare a da m, passarlo ad una funzione che elabora i  il dato e ritorna un tipo b wrappato nel medeismo contesto, e ritornare m b</p>
 
 <p>Si può vedere che la monade è esattamente ciò che ci serve per comporre <em>f</em> e <em>g</em> in modo pulito.</p>
 
@@ -218,12 +224,11 @@ Un monad è definita come</p>
   <span class="n">return</span> <span class="n">x</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
   
   <span class="c1">-- Abbiamo due funzioni (s -&gt; (a, s)) che sono però &quot;wrappate&quot; dentro il </span>
-  <span class="c1">-- record State s a{ unState :: s -&gt; (a, s) }, quindi per comporle per prima </span>
-  <span class="c1">-- cosa dobbiamo swrappalre, poi passargli lo stato, quindi otteniamo una</span>
-  <span class="c1">-- tupla che va decomposta come abbiamo fatto prima e passare il nuovo </span>
-  <span class="c1">-- stato alla funzione successiva.</span>
-  <span class="n">f</span> <span class="o">&gt;&gt;=</span> <span class="n">g</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="kr">let</span> <span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">st1</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">unState</span> <span class="n">f</span><span class="p">)</span> <span class="n">s</span> 
-                         <span class="kr">in</span> <span class="n">unState</span> <span class="p">(</span><span class="n">g</span> <span class="n">result1</span><span class="p">)</span> <span class="n">st1</span>
+  <span class="c1">-- record State s a { unState :: s -&gt; (a, s) }, per prima cosa dobbiamo </span>
+  <span class="c1">-- swrappare la prima funzione f, passarle lo stato s, poi passare il result </span>
+  <span class="c1">-- di f a g, swrappare il risultato e passarvi lo stato ritornato da f</span>
+  <span class="n">f</span> <span class="o">&gt;&gt;=</span> <span class="n">g</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="kr">let</span> <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">st</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">unState</span> <span class="n">f</span><span class="p">)</span> <span class="n">s</span> 
+                         <span class="kr">in</span> <span class="n">unState</span> <span class="p">(</span><span class="n">g</span> <span class="n">result</span><span class="p">)</span> <span class="n">st</span>
 </code></pre></div>
 </p>
 
@@ -235,7 +240,7 @@ Un monad è definita come</p>
 <span class="c1">-- Ma cioè non funzionerebbe perché g vuole agire sullo stato direttamente</span>
 <span class="c1">-- ma per implementazione in &gt;&gt;= a g viene passato il result di f quindi </span>
 <span class="c1">-- dobbiamo </span>
-<span class="nf">f</span> <span class="s">&quot;zap&quot;</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">g</span>
+<span class="nf">f</span> <span class="s">&quot;zap&quot;</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">g</span> <span class="c1">-- ovvero ignorare il result di f e invocare g, questo perchè la nostra g non accetta parametri ma è interessata solo allo stato.</span>
 
 <span class="c1">-- Possiamo creare due comode funzioni per manipolare lo stato+</span>
 
@@ -243,11 +248,11 @@ Un monad è definita come</p>
 <span class="nf">get</span> <span class="ow">::</span> <span class="kt">State</span> <span class="n">s</span> <span class="n">s</span>
 <span class="nf">get</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
 
-<span class="c1">-- put ignora lo stato precendente e inserisce quello passato</span>
+<span class="c1">-- put ignora lo stato precendente e inserisce quello passato come parametro</span>
 <span class="nf">put</span> <span class="ow">::</span> <span class="n">s</span> <span class="ow">-&gt;</span> <span class="kt">State</span> <span class="n">s</span> <span class="nb">()</span>
 <span class="nf">put</span> <span class="n">s</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="nb">()</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
 
-<span class="c1">-- Ora manca una funzione per eseguire il tutto, poi la composizione ritorna </span>
+<span class="c1">-- Ora manca una funzione per eseguire il tutto, poiché la composizione ritorna </span>
 <span class="c1">-- uno State s a è necessario swrappare il tutto e passare uno stato iniziale</span>
 <span class="nf">runState</span> <span class="n">f</span> <span class="n">state</span> <span class="ow">=</span> <span class="p">(</span><span class="n">unState</span> <span class="n">f</span><span class="p">)</span> <span class="n">state</span>
 </code></pre></div>
