@@ -107,7 +107,7 @@
                 </div>
                 <div class="meta">
                     <div class="date" title="Sat Jan 16 2016 13:40:51 CET">Jan 16, 2016</div>
-                    <div class="reading-time"><div class="middot"></div>1 minute read</div>
+                    <div class="reading-time"><div class="middot"></div>3 minutes read</div>
                 </div>
             </div>
             <div class="markdown">
@@ -115,10 +115,77 @@
 
 <h2 id="monads:872cae6effde6b0736f0418affaaf91b">Monads</h2>
 
-<div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">main</span> <span class="ow">::</span> <span class="kt">IO</span> <span class="nb">()</span>
-<span class="nf">main</span> <span class="ow">=</span> <span class="n">print</span> <span class="s">&quot;ciao&quot;</span>
+<p>Per spiegare cosa siano le monadi proverò a sviluppare l&rsquo;intuizione necessaria
+per arrivare ad implementare la monade State.</p>
+
+<p>Supponiamo di essere in un linguaggio puro, ovvero sia dove non è possibile
+alterare il valore delle variabili una volta settate, poniamoci il problema di come trasportare lo stato da una funzione all&rsquo;altra:</p>
+
+<div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">f</span> <span class="ow">::</span> <span class="kt">String</span> <span class="ow">-&gt;</span> <span class="kt">Int</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="kt">String</span><span class="p">,</span> <span class="kt">Int</span><span class="p">)</span>
+<span class="nf">f</span> <span class="n">name</span> <span class="n">counter</span> <span class="ow">=</span> <span class="kr">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;zap&quot;</span> 
+  <span class="kr">then</span> <span class="p">(</span><span class="s">&quot;found&quot;</span><span class="p">,</span> <span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> 
+  <span class="kr">else</span> <span class="p">(</span><span class="s">&quot;nada&quot;</span><span class="p">,</span>  <span class="n">counter</span><span class="p">)</span>
+
+<span class="nf">g</span> <span class="ow">::</span> <span class="kt">Int</span> <span class="ow">-&gt;</span> <span class="kt">Int</span>
+<span class="nf">g</span> <span class="n">counter</span> <span class="ow">=</span> <span class="n">counter</span> <span class="o">+</span> <span class="mi">3</span>
 </code></pre></div>
 
+
+<p>counter è il nostro stato, se volessimo passarlo da f a g dovremmo
+<div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">let</span> <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">counter1</span><span class="p">)</span> <span class="ow">=</span> <span class="n">f</span> <span class="s">&quot;zap&quot;</span> <span class="mi">0</span>
+<span class="kr">let</span> <span class="n">counter2</span> <span class="ow">=</span> <span class="n">g</span> <span class="n">counter1</span>
+</code></pre></div>
+</p>
+
+<p>ogni funzione che vuol manipoalre lo stato dovrà prendere tutte le variabili che lo compongono e ricordarsi di ritornare all&rsquo;uscita della funzione stessa assieme a quello che la funzione ritornerebbe normalmente.</p>
+
+<p>Come si nota la cosa non è molto comodo oltre al fatto che non è ben definita a livello di tipi.
+Come procedere allora, prima cosa che si può fare è definire un record che definisca lo state da passare.</p>
+
+<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">CounterState</span> <span class="ow">=</span> <span class="kt">CounterState</span> 
+ <span class="p">{</span> <span class="n">counter</span> <span class="ow">::</span> <span class="kt">Int</span>
+ <span class="p">}</span>
+ 
+<span class="nf">f</span> <span class="ow">::</span> <span class="kt">String</span> <span class="ow">-&gt;</span> <span class="kt">CounterState</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="kt">String</span><span class="p">,</span> <span class="kt">CounterState</span><span class="p">)</span>
+<span class="nf">f</span> <span class="n">name</span> <span class="n">st</span><span class="o">@</span><span class="p">(</span><span class="kt">CounterState</span> <span class="n">counter</span><span class="p">)</span> <span class="ow">=</span> <span class="kr">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;zap&quot;</span>
+  <span class="kr">then</span> <span class="p">(</span><span class="s">&quot;found&quot;</span><span class="p">,</span> <span class="n">st</span><span class="p">{</span><span class="n">counter</span> <span class="ow">=</span> <span class="n">counter</span><span class="o">+</span><span class="mi">1</span><span class="p">})</span>
+  <span class="kr">else</span> <span class="p">(</span><span class="s">&quot;nada&quot;</span><span class="p">,</span> <span class="n">st</span><span class="p">)</span>
+
+<span class="nf">g</span> <span class="ow">::</span> <span class="kt">CounterState</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="nb">()</span><span class="p">,</span> <span class="kt">CounterState</span><span class="p">)</span>
+<span class="nf">g</span> <span class="n">st</span><span class="o">@</span><span class="p">(</span><span class="kt">CounterState</span> <span class="n">counter</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="nb">()</span><span class="p">,</span> <span class="n">st</span><span class="p">{</span><span class="n">counter</span> <span class="ow">=</span> <span class="n">counter</span><span class="o">+</span><span class="mi">3</span><span class="p">})</span>
+
+<span class="kr">let</span> <span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">st1</span><span class="p">)</span> <span class="ow">=</span> <span class="n">f</span> <span class="s">&quot;zap&quot;</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
+<span class="kr">let</span> <span class="p">(</span><span class="n">result2</span><span class="p">,</span> <span class="n">st2</span><span class="p">)</span> <span class="ow">=</span> <span class="n">g</span> <span class="n">st1</span>
+</code></pre></div>
+</p>
+
+<p>Già va meglio, si può vedere che ora g accetta solo CounterState, ma c&rsquo;è sempre bisogno di ricordarsi di ritornare lo state e nonstante entrambe le funzioni lavorino sul medesimo stato non sono componibili direttamente, c&rsquo;è sempre bisogno di spacchettare result e state e passare lo state alla nuova funzione.</p>
+
+<p>Ora se analiziamo il tipo di (f &ldquo;zap&rdquo;) e g noteremo che è</p>
+
+<p><code>s -&gt; (a, s)</code></p>
+
+<p>overro preso uno state s, ritorna una tupla con il result e lo state.</p>
+
+<p>Creiamo allora un record per questa funzione:</p>
+
+<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">State</span> <span class="n">s</span> <span class="n">a</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">{</span> <span class="n">unState</span> <span class="ow">::</span> <span class="n">s</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="p">}</span>
+
+<span class="nf">f</span> <span class="ow">::</span> <span class="kt">String</span> <span class="ow">-&gt;</span> <span class="kt">State</span> <span class="kt">CounterState</span> <span class="kt">String</span> 
+<span class="nf">f</span> <span class="n">name</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">st</span><span class="o">@</span><span class="p">(</span><span class="kt">CounterState</span> <span class="n">counter</span><span class="p">)</span> <span class="ow">-&gt;</span> 
+  <span class="kr">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;zap&quot;</span>
+    <span class="kr">then</span> <span class="p">(</span><span class="s">&quot;found&quot;</span><span class="p">,</span> <span class="n">st</span><span class="p">{</span><span class="n">counter</span><span class="ow">=</span><span class="n">counter</span><span class="o">+</span><span class="mi">1</span><span class="p">}))</span>
+    <span class="kr">else</span> <span class="p">(</span><span class="s">&quot;nada&quot;</span> <span class="p">,</span> <span class="n">st</span><span class="p">)</span>
+
+<span class="nf">g</span> <span class="ow">::</span> <span class="kt">State</span> <span class="kt">String</span> <span class="ow">-&gt;</span> <span class="kt">State</span> <span class="kt">CounterState</span> <span class="nb">()</span>
+<span class="nf">g</span> <span class="ow">=</span> <span class="kt">State</span> <span class="p">(</span><span class="nf">\</span><span class="n">st</span><span class="o">@</span><span class="p">(</span><span class="kt">CounterState</span> <span class="n">counter</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="nb">()</span><span class="p">,</span> <span class="n">st</span><span class="p">{</span><span class="n">counter</span><span class="ow">=</span><span class="n">counter</span><span class="o">+</span><span class="mi">1</span><span class="p">}))</span>
+
+<span class="kr">let</span> <span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">st1</span><span class="p">)</span> <span class="ow">=</span> <span class="n">unState</span> <span class="p">(</span><span class="n">f</span> <span class="s">&quot;zap&quot;</span><span class="p">)</span> <span class="p">(</span><span class="kt">CounterState</span> <span class="mi">0</span><span class="p">)</span>
+<span class="kr">let</span> <span class="p">(</span><span class="n">result2</span><span class="p">,</span> <span class="n">st2</span><span class="p">)</span> <span class="ow">=</span> <span class="n">unState</span> <span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="n">st1</span>
+</code></pre></div>
+</p>
+
+<p>Abbiamo &ldquo;wrappato&rdquo; le due funzioni e messe all&rsquo;interno del record State e chiamare <em>unState</em> sul record <em>State</em> ci permette di estrarre la funzione e di chiamarla poi passandoci lo stato o argomenti aggiuntivi.</p>
 
                 <br>
                 <p><a href="https://ga2arch.github.io/blog/">Back to posts</a></p>
