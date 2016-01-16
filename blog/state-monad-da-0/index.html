@@ -287,12 +287,12 @@ all&rsquo;interno di un &ldquo;contesto&rdquo; di tipo m</p></li>
 
 <p>Desugaring la do notation otteniamo:</p>
 
-<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">f</span> <span class="n">name</span> <span class="ow">=</span> <span class="n">get</span> 
+<p><div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">f</span> <span class="n">name</span> <span class="ow">=</span> <span class="kt">State</span> <span class="o">$</span> <span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="n">get</span> 
   <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="n">counter</span> <span class="ow">-&gt;</span> <span class="kr">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&quot;zap&quot;</span>
     <span class="kr">then</span> <span class="n">put</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">return</span> <span class="s">&quot;found&quot;</span>
     <span class="kr">else</span> <span class="n">return</span> <span class="s">&quot;nada&quot;</span>
     
-<span class="nf">g</span> <span class="ow">=</span> <span class="n">get</span> 
+<span class="nf">g</span> <span class="ow">=</span> <span class="kt">State</span> <span class="o">$</span> <span class="nf">\</span><span class="n">s</span> <span class="ow">-&gt;</span> <span class="n">get</span> 
   <span class="o">&gt;&gt;=</span> <span class="p">(</span><span class="nf">\</span><span class="n">counter</span> <span class="ow">-&gt;</span> <span class="n">put</span> <span class="p">(</span><span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> 
   <span class="o">&gt;&gt;=</span> <span class="n">return</span> <span class="nb">()</span>
 
